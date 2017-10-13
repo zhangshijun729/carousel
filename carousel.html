@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="jquery-3.1.1.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        
+        li {
+            list-style: none;
+        }
+        
+        a {
+            text-decoration: none;
+        }
+        
+        .content {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .img-ct {
+            position: absolute;
+        }
+        
+        .img-ct img {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .img-ct:after {
+            content: "";
+            display: block;
+            clear: both;
+        }
+        
+        .img-ct>li {
+            float: left;
+        }
+        
+        .arrow {
+            position: absolute;
+            top: 50%;
+            margin-top: -15px;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            background: #4E443C;
+            color: #fff;
+            border-radius: 30px;
+            opacity: 0.8;
+        }
+        
+        .arrow:hover {
+            opacity: 1;
+        }
+        
+        .pre {
+            left: 10px;
+        }
+        
+        .next {
+            right: 10px;
+        }
+        
+        .billet {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .billet>li {
+            width: 30px;
+            height: 8px;
+            border: 1px solid #fff;
+            border-radius: 4px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        
+        .action {
+            background: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <ul class="img-ct">
+            <li data-id="0">
+                <a href="javascript:;"><img src="中德正门.jpg"/></a>
+            </li>
+            <li data-id="1">
+                <a href="javascript:;"><img src="老中德.jpg"/></a>
+            </li>
+            <li data-id="2">
+                <a href="javascript:;"><img src="中德教学楼.jpg"/></a>
+            </li>
+            <li data-id="3">
+                <a href="javascript:;"><img src="中德中西.jpg"/></a>
+            </li>
+            <li data-id="4">
+                <a href="javascript:;"><img src="中德侧门.jpg"/></a>
+            </li>
+        </ul>
+        <a class="pre arrow" href="#">&lt;</a>
+        <a class="next arrow" href="#">&gt;</a>
+        <ul class="billet">
+            <li class="action"></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </div>
+    <script>
+        var Carousel = (function () {
+            function _Carouse($ct) {
+                this.$ct = $ct
+                this.init()
+                this.bind()
+            }
+
+            _Carouse.prototype.init = function () {
+                var _this = this
+                var $imgCt = this.$imgCt = this.$ct.find('.img-ct')
+                var $pre = this.$pre = this.$ct.find('.pre')
+                var $next = this.$next = this.$ct.find('.next')
+                var $billet = this.$billet = this.$ct.find('.billet')
+                var $firstImg = $imgCt.find('li').first()
+                var $lastImg = $imgCt.find('li').last()
+                this.curPageIndex = 0
+                this.isAnimate = false
+                this.imgLength = $imgCt.children().length
+                this.imgWidth = $firstImg.width()
+                $imgCt.prepend($lastImg.clone())
+                $imgCt.append($firstImg.clone())
+                $imgCt.width(this.imgWidth * $imgCt.children().length)
+                $imgCt.css({"left": 0 - this.imgWidth})
+                this.timer = setInterval(function () {
+                  _this.nextPlay(1)
+                },1500)
+            }
+            _Carouse.prototype.bind = function () {
+                var _this = this
+                this.$pre.on('click',function(e){
+                    e.preventDefault()
+                    _this.prePlay()
+                })
+                this.$next.on('click',function (e) {
+                    e.preventDefault()
+                    _this.nextPlay()
+                })
+                this.$billet.on('click', 'li',function (e) {
+                    var idx = $(this).index()
+                    if(idx > _this.curPageIndex){
+                        _this.nextPlay(idx-_this.curPageIndex)
+                    }else if (idx < _this.curPageIndex){
+                        _this.prePlay(_this.curPageIndex-idx)
+                    }
+                })
+              this.$imgCt.on('mouseover',function () {
+                clearInterval(_this.timer)
+              })
+              this.$imgCt.on('mouseout',function () {
+                _this.timer = setInterval(function () {
+                  _this.nextPlay(1)
+                },1500)
+              })
+            }
+            _Carouse.prototype.prePlay = function (idx) {
+                var _this = this
+                var idx = idx || 1
+                if(this.isAnimate) return
+                this.isAnimate = true
+                this.$imgCt.animate({
+                    left:'+='+_this.imgWidth*idx
+                },function () {
+                    _this.curPageIndex = (_this.imgLength+_this.curPageIndex-idx)%_this.imgLength
+                    _this.setBillet()
+                    if (_this.curPageIndex === _this.imgLength-1){
+                        _this.$imgCt.css({left:0-_this.imgWidth*_this.imgLength})
+                    }
+                    _this.isAnimate = false
+                })
+            }
+           _Carouse.prototype.nextPlay = function (idx) {
+               var _this = this
+               var idx = idx || 1
+               if (this.isAnimate) return
+               this.isAnimate = true
+               this.$imgCt.animate({
+                   left:'-='+_this.imgWidth*idx
+               },function(){
+                   _this.curPageIndex = (_this.curPageIndex+idx)%_this.imgLength
+                   _this.setBillet()
+                   if (_this.curPageIndex === 0){
+                       _this.$imgCt.css({left:0-_this.imgWidth})
+                   }
+                   _this.isAnimate = false
+               })
+           }
+           _Carouse.prototype.setBillet = function () {
+               this.$billet.children().removeClass('action')
+                   .eq(this.curPageIndex).addClass('action')
+           }
+           return {
+                init: function ($ct) {
+                    $ct.each(function (index, node) {
+                        new _Carouse($(node))
+                    })
+                }
+           }
+        })()
+        Carousel.init($('.content'))
+    </script>
+</body>
+
+</html>
